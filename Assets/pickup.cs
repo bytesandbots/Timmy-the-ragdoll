@@ -6,11 +6,15 @@ public class pickup : MonoBehaviour
 {
 
     bool canpickup;
-    Transform newowner;
+    public Transform newowner;
+
+    public LayerMask lm;
+    public LayerMask oldlm;
+
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
@@ -20,27 +24,61 @@ public class pickup : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.E))
             {
+                GetComponent<Rigidbody>().useGravity = false;
+                GetComponent<Rigidbody>().isKinematic = true;
                 transform.SetParent(newowner);
+                canpickup = false;
+                foreach (Transform objs in transform)
+                {
+                    objs.gameObject.SetActive(false);
+                }
+                foreach (BoxCollider objs in transform.GetComponents<BoxCollider>())
+                {
+                    objs.enabled = false;
+                }
             }
-            canpickup = false;
+
         }
         else
         {
-            if (Input.GetKeyDown(KeyCode.F))
+
+            if (Input.GetKeyDown(KeyCode.F) && newowner != null)
             {
-                GetComponent<Rigidbody>().AddForce(transform.forward * 10, ForceMode.Impulse);
+                GetComponent<Rigidbody>().useGravity = true;
+                GetComponent<Rigidbody>().isKinematic = false;
+                transform.forward = newowner.GetChild(0).forward;
+                transform.position += new Vector3(0, .5f, 0);
+                GetComponent<Rigidbody>().AddForce(newowner.GetChild(0).forward * 250, ForceMode.Impulse);
                 transform.SetParent(null);
+                Debug.Log("hello");
+                foreach (Transform objs in transform)
+                {
+                    objs.gameObject.SetActive(true);
+                }
+
+                newowner = null;
+                foreach (BoxCollider objs in transform.GetComponents<BoxCollider>())
+                {
+                    objs.enabled = true;
+                }
             }
         }
     }
 
+    IEnumerator carfix()
+    {
+        gameObject.layer = oldlm;
+        yield return new WaitForSeconds(.1f);
+        gameObject.layer = lm;
+    }
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
+            Debug.Log("clickbait");
             newowner = other.transform;
             canpickup = true;
-           
+
         }
     }
     private void OnTriggerExit(Collider other)
@@ -48,7 +86,9 @@ public class pickup : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             canpickup = false;
-            transform.SetParent(null);
+            //transform.SetParent(nu
+            newowner = null;
         }
+
     }
 }
